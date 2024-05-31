@@ -1,0 +1,58 @@
+services:
+   mysql:
+      container_name : mysql_ptlbros
+      image : mysql:latest
+      environment : 
+         - MYSQL_ROOT_PASSWORD=password
+         - MYSQL_DATABASE=patelbros_db
+      ports : 
+         - 3308:3306
+      volumes :
+         - mysql:/var/bin/mysql
+      networks : 
+         - spring-ptlbros
+      restart : unless-stopped
+      healthcheck:
+         test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+         interval: 15s
+         retries: 3
+         timeout: 5s
+   mail-dev:
+      container_name : mail_ptlbros
+      image : maildev/maildev
+      ports : 
+         - 1080:1080
+         - 1025:1025
+      networks : 
+         - spring-ptlbros
+   patelbros-api:
+      container_name: ptlbros
+      image: ptlbros/ptlbros:1.0.0
+      ports:
+         - 1323:1323
+      networks:
+         - spring-ptlbros
+      depends_on:
+         mysql:
+            condition: service_healthy
+      healthcheck:
+         test: ["CMD", "curl", "-f", "http://mysql_ptlbros:3306"]
+         interval: 35s
+         retries: 10
+         start_period: 60s
+   patelbros-ui :
+      container_name: ptlbros-ui
+      image: ptlbros/ptlbros-ui:1.0.0
+      ports:
+         - 8080:80
+      networks:
+         - spring-ptlbros
+      depends_on:
+         - patelbros-api
+networks:
+   spring-ptlbros:
+      driver : bridge
+
+volumes :
+     mysql :
+        driver : local
