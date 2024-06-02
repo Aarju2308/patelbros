@@ -56,7 +56,7 @@ jobs:
     name: Build Backend
     needs: [compile,unit-tests]
     steps:
-      - name: Checkout cde
+      - name: Checkout code
         uses: actions/checkout@v4
         with: 
           fetch-depth : 0
@@ -125,7 +125,7 @@ jobs:
       - name: Set ENV variable and deploy
         run: |
           ssh -i ${{ secrets.VPS_KEY }} ${{ secrets.VPS_USERNAME }}@${{secrets.VPS_IP}} <<EOF
-          export EMAIL_HOSTNAME=${{secrets.EMAIL_HOSTNAME}}
+          export EMAIL_HOSTNAME=${{secrets.EMAIL_HOST}}
           export EMAIL_USERNAME=${{secrets.EMAIL_USERNAME}}
           export EMAIL_PASSWORD=${{secrets.EMAIL_PASSWORD}}
           cd ci-cd
