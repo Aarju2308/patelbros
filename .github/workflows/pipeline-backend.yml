@@ -101,7 +101,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build & Push to DockerHub
-        uses: docker/docker-push-action@v5
+        uses: docker/build-push-action@v5
         with:
           context: PatelBros
           file: Docker/Backend/Dockerfile   
