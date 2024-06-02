@@ -18,7 +18,7 @@ jobs:
       - name: checkout code
         uses: actions/checkout@v4
         with:
-            fetchDepth: 0
+          fetch-depth : 0
 
       - name: Extract project version
         id : extract_version
@@ -33,7 +33,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build & Push to DockerHub
-        uses: docker/docker-push-action@v5  
+        uses: docker/build-push-action@v5 
         with:
           context: PatelBros
           file: Docker/Frontend/Dockerfile   
