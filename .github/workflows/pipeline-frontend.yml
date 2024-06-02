@@ -41,7 +41,6 @@ jobs:
           platforms: linux/amd64
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/ptlbros-ui:latest
-            # ${{ secrets.DOCKERHUB_USERNAME }}/ptlbros-ui:${{ steps.extract_version.outputs.VERSION }}
   deploy:
     name: Deploy Frontend
     runs-on: self-hosted
