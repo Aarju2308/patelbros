@@ -20,6 +20,11 @@ jobs:
         with:
           fetch-depth : 0
 
+      - name: Install Jq 
+        run: |
+          sudo apt-get update
+          sudo apt-get install jq
+
       - name: Extract project version
         id : extract_version
         run: |
@@ -41,6 +46,7 @@ jobs:
           platforms: linux/amd64
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/ptlbros-ui:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/ptlbros-ui:${{ steps.extract_version.outputs.VERSION }}
   deploy:
     name: Deploy Frontend
     runs-on: self-hosted
