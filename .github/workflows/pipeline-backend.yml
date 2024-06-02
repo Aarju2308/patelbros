@@ -116,11 +116,12 @@ jobs:
     runs-on: self-hosted
     needs: [build-image]
     steps:
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
       - name: Create deployment folder
         run: |
-         ssh ${{ secrets.VPS_USERNAME }}@${{secrets.VPS_IP}} 
-         ${{secrets.VPS_KEY}}
-         "mkdir -p ci-cd"
+          shpass -p "${{ secrets.VPS_KEY }}" ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_IP }} "mkdir -p ci-cd"
 
       - name: Copy docker-compose file
         run: scp docker-compose.yml -i ${{ secrets.VPS_KEY }} ${{ secrets.VPS_USERNAME }}@${{secrets.VPS_IP}}:ci-cd/docker-compose.yml
