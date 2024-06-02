@@ -117,7 +117,10 @@ jobs:
     needs: [build-image]
     steps:
       - name: Create deployment folder
-        run: ssh -i ${{ secrets.VPS_KEY }} ${{ secrets.VPS_USERNAME }}@${{secrets.VPS_IP}} "mkdir -p ci-cd"
+        run: |
+         ssh ${{ secrets.VPS_USERNAME }}@${{secrets.VPS_IP}} 
+         ${{secrets.VPS_KEY}}
+         "mkdir -p ci-cd"
 
       - name: Copy docker-compose file
         run: scp docker-compose.yml -i ${{ secrets.VPS_KEY }} ${{ secrets.VPS_USERNAME }}@${{secrets.VPS_IP}}:ci-cd/docker-compose.yml
