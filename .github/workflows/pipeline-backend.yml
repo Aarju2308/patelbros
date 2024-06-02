@@ -133,7 +133,6 @@ jobs:
           export EMAIL_USERNAME=${{secrets.EMAIL_USERNAME}}
           export EMAIL_PASSWORD=${{secrets.EMAIL_PASSWORD}}
           cd ci-cd
-          sudo su
-          docker-compose -f docker-compose.yml pull -q
-          docker-compose -f docker-compose.yml up -d
+          sudo docker-compose -f docker-compose.yml pull -q
+          sudo docker-compose -f docker-compose.yml up -d
           EOF
