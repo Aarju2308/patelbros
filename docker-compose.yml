@@ -17,6 +17,7 @@ services:
          interval: 15s
          retries: 3
          timeout: 5s
+
    mail-dev:
       container_name : mail_ptlbros
       image : maildev/maildev
@@ -25,24 +26,32 @@ services:
          - 1025:1025
       networks : 
          - spring-ptlbros
+
    patelbros-api:
       container_name: ptlbros
-      image: ptlbros/ptlbros:1.0.0
+      image: aarju2308/ptlbros:1.0.0
       ports:
          - 1323:1323
       networks:
          - spring-ptlbros
+      volumes:
+        - ptlbros-api-storage:/app/uploads
       depends_on:
          mysql:
             condition: service_healthy
+      environment:
+         - EMAIL_HOSTNAME=${EMAIL_HOST}
+         - EMAIL_USERNAME=${EMAIL_USERNAME}
+         - EMAIL_PASSWORD=${EMAIL_PASSWORD}
       healthcheck:
          test: ["CMD", "curl", "-f", "http://mysql_ptlbros:3306"]
          interval: 35s
          retries: 10
          start_period: 60s
+
    patelbros-ui :
       container_name: ptlbros-ui
-      image: ptlbros/ptlbros-ui:1.0.0
+      image: aarju2308/ptlbros-ui:1.0.0
       ports:
          - 8080:80
       networks:
@@ -54,5 +63,7 @@ networks:
       driver : bridge
 
 volumes :
-     mysql :
-        driver : local
+   mysql :
+      driver : local
+   ptlbros-api-storage:
+      driver: local

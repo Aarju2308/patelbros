@@ -1,0 +1,138 @@
+name: Patel Bros Backend API Pipeline
+
+on:
+  push:
+    branches:
+      - ci/pipeline
+    paths:
+      - PatelBros/**
+      - Docker/Backend/**
+      - 'docker-compose.yml'
+      - .github/workflows/*-backend.yml
+    
+jobs:
+  compile:
+    runs-on: self-hosted
+    name: compile-project
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with: 
+          fetch-depth : 0
+      
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version : 17
+          distribution: 'corretto'
+
+      - name: Compile Project
+        run: |
+          cd PatelBros
+          ./mvnw clean compile
+
+  unit-tests:
+    runs-on: self-hosted
+    name: Unit Tests
+    steps:
+      - name: Checkout cde
+        uses: actions/checkout@v4
+        with: 
+          fetch-depth : 0
+      
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version : 17
+          distribution: 'corretto'
+
+      - name: Running Unit Tests
+        run: |
+          cd PatelBros
+          ./mvnw clean test
+
+  build:
+    runs-on: self-hosted
+    name: Build Backend
+    needs: [compile,unit-tests]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with: 
+          fetch-depth : 0
+      
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version : 17
+          distribution: 'corretto'
+
+      - name: Build Project
+        run: |
+          cd PatelBros
+          ./mvnw clean package
+
+  build-image:
+    runs-on: self-hosted
+    name: Build Docker Image
+    needs: [build]
+    steps:
+      - name: Checkout cde
+        uses: actions/checkout@v4
+        with: 
+          fetch-depth : 0
+      
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version : 17
+          distribution: 'corretto'
+
+      - name: Extract Project Version
+        id: extract_version
+        run: |
+          cd PatelBros
+          echo "VERSION=$(./mvnw -q -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec)" >> $GITHUB_OUTPUT
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & Push to DockerHub
+        uses: docker/build-push-action@v5
+        with:
+          context: PatelBros
+          file: Docker/Backend/Dockerfile   
+          push: true
+          platforms: linux/amd64
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ptlbros:${{steps.extract_version.outputs.VERSION}}
+          build-args: |
+            APP_VERSION=${{ steps.extract_version.outputs.VERSION }}
+
+  deploy:
+    name: Deploy Backend
+    runs-on: self-hosted
+    needs: [build-image]
+    steps:
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Create deployment folder
+        run: |
+          sshpass -p "${{ secrets.VPS_KEY }}" ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_IP }} "mkdir -p ci-cd"
+
+      - name: Copy docker-compose file
+        run: sshpass -p "${{ secrets.VPS_KEY }}" scp -o StrictHostKeyChecking=no docker-compose.yml ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_IP }}:ci-cd/docker-compose.yml
+        
+      - name: Set ENV variable and deploy
+        run: |
+          sshpass -p "${{ secrets.VPS_KEY }}" ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_IP }} <<EOF
+          export EMAIL_HOSTNAME=${{secrets.EMAIL_HOST}}
+          export EMAIL_USERNAME=${{secrets.EMAIL_USERNAME}}
+          export EMAIL_PASSWORD=${{secrets.EMAIL_PASSWORD}}
+          cd ci-cd
+          docker-compose -f docker-compose.yml pull -q
+          docker-compose -f docker-compose.yml up -d
+          EOF
