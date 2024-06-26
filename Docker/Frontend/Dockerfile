@@ -1,10 +1,12 @@
-FROM node:20.10.0 as build
+FROM node:20.10.0-alpine AS builder 
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN sudo npm install
+RUN apk add --no-cache --virtual .build-deps nodejs npm  # Install dependencies using apk
+
+RUN npm install
 
 COPY . .
 
@@ -14,7 +16,6 @@ FROM nginx:alpine
 
 COPY nginx.conf /etc/nginx/nginx.conf
 
-COPY --from=build /app/dist/patelbros/browser ./usr/share/nginx/html 
+COPY --from=build /app/dist/patelbros/browser ./usr/share/nginx/html
 
 EXPOSE 80
-
